@@ -1,8 +1,21 @@
 # AnnotationFusion
 This package implements algorithms based on Copeland's method and Triplet Embeddings for fusion of human annotations. It supports both annotations in time (i.e. regression) as well as session-level annotations (i.e. classification, or unique annotations for a given item).
 
+# Installation
+To install the latest version, use Julia 1.2 or greater. In a Julia REPL, do:
+```julia
+julia> ]
+(v1.3) pkg> add www.github.com/usc-sail/AnnotationFusion.jl
+```
+
 # Usage
-## Classification (session-level annotations)
+## Helper scripts
+Scripts to automatically use this package from the command line may be found in [this repo](https://www.github.com/kmundnic/annotation-fusion). These scripts will install the necessary packages and run the fusion from the annotations passed to it from CSV file.
+
+## Package
+This package may also be used directly in Julia scripts.
+
+### Classification (session-level annotations)
 We assume that the annotations are saved in a CSV file, where each row represents a session and each column contains annotations from different annotators:
 ```julia
 │ Row  │ carlos  │ lisa    │ mae     │ soyoon  │
@@ -19,9 +32,9 @@ We assume that the annotations are saved in a CSV file, where each row represent
 │ 9    │ 4       │ 5       │ 3       │ missing │
 ⋮
 ```
-### Triplet Embeddings
+#### Triplet Embeddings
 We compute the pairwise distances between columns (considering the missing values) and mine triplets over these. The number of triplets mined depends on the number of items or sessions. By default, we mine `C*n*log(n)` triplets with `C = 40`. We then find an embedding representing the ratings using a logistic loss.
 
-### Copeland's method
+#### Copeland's method
 
-## Regression (or real-time, or time-continuous annotations)
+### Regression (or real-time, or time-continuous annotations)

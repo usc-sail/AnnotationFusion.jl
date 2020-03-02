@@ -38,3 +38,8 @@ We compute the pairwise distances between columns (considering the missing value
 #### Copeland's method
 
 ### Regression (or real-time, or time-continuous annotations)
+
+# References
+ - Mundnich K, Nasir M, Georgiou PG, Narayanan SS. _Exploiting Intra-Annotator Rating Consistency Through Copeland's Method for Estimation of Ground Truth Labels in Couples' Therapy_. In INTERSPEECH 2017 (pp. 3167-3171). [PDF](https://sail.usc.edu/publications/files/mundnichinterspeech2017.pdf)
+ - Booth BM, Mundnich K, Narayanan S. _Fusing annotations with majority vote triplet embeddings_. In Proceedings of the 2018 on Audio/Visual Emotion Challenge and Workshop 2018 Oct 15 (pp. 83-89). [PDF](https://sail.usc.edu/publications/files/p83-booth.pdf)
+ - Mundnich K, Booth BM, Girault B, Narayanan S. _Generating labels for regression of subjective constructs using triplet embeddings_. Pattern Recognition Letters. 2019 Dec 1; 128:385-92. [PDF](https://sail.usc.edu/publications/files/1-s2.0-S0167865519302752-main%20(1).pdf)

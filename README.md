@@ -5,7 +5,7 @@ This package implements algorithms based on Copeland's method and Triplet Embedd
 To install the latest version, use Julia 1.2 or greater. In a Julia REPL, do:
 ```julia
 julia> ]
-(v1.3) pkg> add www.github.com/usc-sail/AnnotationFusion.jl
+(@v1.4) pkg> add www.github.com/usc-sail/AnnotationFusion.jl
 ```
 
 # Usage
@@ -33,7 +33,33 @@ We assume that the annotations are saved in a CSV file, where each row represent
 ⋮
 ```
 #### Triplet Embeddings
-We compute the pairwise distances between columns (considering the missing values) and mine triplets over these. The number of triplets mined depends on the number of items or sessions. By default, we mine `C*n*log(n)` triplets with `C = 40`. We then find an embedding representing the ratings using a logistic loss.
+We compute the pairwise distances between columns (considering the missing values) and mine triplets over these. The number of triplets mined depends on the number of items or sessions. By default, we mine all possible triplets, but this may fail if the number of items to embed is too large (> 500 items).
+
+Here's an example on how to run the code, using the [TripletEmbeddings.jl](www.github.com/usc-sail/TripletEmbeddings.jl) package:
+
+```julia
+using CSV
+using DataFrames
+using AnnotationFusion
+using TripletEmbeddings
+
+data = CSV.read("data.csv") # Or select the path where your data is
+
+raters = :raters
+items = :items
+ratings = Symbol("some.answer")
+
+# This is required is the ratings are saved in a sparse array instead of a matrix
+arousal = AnnotationFusion.generateAnnotationsMatrix(data, raters, items, ratings)
+
+# Generate the triplets from a matrix, where rows indicate items and columns indicate raters
+triplets = AnnotationFusion.Triplets(arousal[!,2:end])
+
+dims = 1
+X = Embedding(dims, maximum(triplets)) # Initialize a random embedding
+misclassifications = fit!(STE(), triplets, X; max_iterations=1000, verbose=false)
+```
+The embedding `X` will have the embedded items in `dims`-dimensional space.
 
 #### Copeland's method
 

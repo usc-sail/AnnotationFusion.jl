@@ -57,3 +57,23 @@ function agreements(
 
     return length(intersect(set1, set2)) / ( n1 * binomial(n1 - 1, 2))
 end
+
+function generateAnnotationsMatrix(data::DataFrame, raters::Symbol, items::Symbol, ratings::Symbol)
+    groups = groupby(select(data, [items, raters, ratings]), raters)
+    df = select(convert(DataFrame, groups[1]), [items, ratings])
+
+    for i = 2:length(groups)
+        aux = select(convert(DataFrame, groups[i]), [items, ratings])
+        df = join(df, aux, on=items, makeunique=true, kind=:outer)
+    end
+
+    annotators = unique(data[!,raters])
+    rename!(df, [items; Symbol.(annotators)])
+
+    return df
+end
+
+
+function columncounts(df::AbstractDataFrame, column::Symbol)
+    return Dict([(i, count(x -> x == i, df[!,column])) for i in unique(df[!,column])])
+end

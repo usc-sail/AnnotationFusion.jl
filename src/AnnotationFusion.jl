@@ -14,4 +14,4 @@ export Triplets
 include("utils.jl")
 include("triplets.jl")
 
-end # module
+end

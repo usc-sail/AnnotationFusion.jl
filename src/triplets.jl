@@ -1,46 +1,40 @@
 function Triplets(
     annotations::DataFrame;
-    weights::Vector{Float64}=ones(Float64, size(annotations, 2))
-)
+    weights::Array{Float64,1}=ones(Float64,size(annotations,2))
+    )
 
-    C = 40
-    nannotations, nannotators = size(annotations)
-    ntriplets = round(Int, C*nannotations*log(nannotations))
+    nannotations = size(annotations, 1)
+    ntriplets = nannotations * binomial(nannotations - 1, 2)
+    nannotators = size(annotations, 2) - 1
     triplets = Vector{Tuple{Int,Int,Int}}(undef, ntriplets)
-
     counter = 0
 
-    # D = [distances(annotations[:,i]) for i in 1:nannotators]
-    is = rand(1:nannotations, ntriplets)
+    D = [distances(annotations[:,i]) for i in 1:nannotators]
 
-    for t = 1:ntriplets
-        # println(t)
-        i = is[t]
-        k = rand(setdiff(2:nannotations, i))
-        j = rand(setdiff(1:k-1, i))
+    for k = 1:nannotations, j = 1:k-1, i = 1:nannotations
+        if i != j && i != k
 
-        less_than = 0
-        greater_than = 0
+            less_than = 0
+            greater_than = 0
 
-        for l = 1:nannotators
-            # First check that none of the annotations are missing
-            if all([!ismissing(annotations[idx,l]) for idx in [i,j,k]])
-                if D[l][i,j] < D[l][i,k]
-                    less_than += weights[l]
-                elseif D[l][i,j] > D[l][i,k]
-                    greater_than += weights[l]
+            for l = 1:nannotators
+                if !ismissing(D[l][i,j]) && !ismissing(D[l][i,k])
+                    if D[l][i,j] < D[l][i,k]
+                        less_than += weights[l]
+                    elseif D[l][i,j] > D[l][i,k]
+                        greater_than += weights[l]
+                    end
                 end
             end
-        end
 
-        if less_than > greater_than
-            counter += 1
-            @inbounds triplets[counter] = (i, j, k)
-        elseif less_than < greater_than
-            counter += 1
-            @inbounds triplets[counter] = (i, k, j)
+            if less_than > greater_than
+                counter += 1
+                @inbounds triplets[counter] = (i, j, k)
+            elseif less_than < greater_than
+                counter += 1
+                @inbounds triplets[counter] = (i, k, j)
+            end
         end
-
     end
 
     return Triplets(triplets[1:counter])

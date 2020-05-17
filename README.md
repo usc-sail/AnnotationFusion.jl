@@ -5,7 +5,8 @@ This package implements algorithms based on Copeland's method and Triplet Embedd
 To install the latest version, use Julia 1.2 or greater. In a Julia REPL, do:
 ```julia
 julia> ]
-(@v1.4) pkg> add https://github.com/usc-sail/AnnotationFusion.jl
+(@v1.4) pkg> add https://github.com/usc-sail/TripletEmbeddings.jl # Install triplet embeddings package
+(@v1.4) pkg> add https://github.com/usc-sail/AnnotationFusion.jl # Install annotation fusion package
 ```
 
 # Usage

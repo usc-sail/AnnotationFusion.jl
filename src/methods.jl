@@ -149,11 +149,12 @@ end
 
 struct TE <: FusionMethod
     loss::T where T <: TripletEmbeddings.AbstractLoss
+    verbose::Bool
     print_every::Int
 
-    function TE(; loss::T=tSTE(α=30), print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
+    function TE(; loss::T=tSTE(α=30), verbose::Bool=true, print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
         # tSTE(α=30) is equivalent to STE(σ=1/√(2)), but more numerically stable
-        new(loss, print_every)
+        new(loss, verbose, print_every)
     end
 end
 
@@ -162,8 +163,9 @@ function fuse(annotations::DataFrame, index::Symbol, method::TE)
     triplets = Triplets(annotations, index)
 
     μ = fuse(annotations, index, Mean())
-    X = Embedding(μ) # set the initial condition as the mean
-    misclassifications = fit!(method.loss, triplets, X; print_every=method.print_every)
+    X = Embedding(μ) # set the initial condition as the mean, since they are somewhat close
+
+    misclassifications = fit!(method.loss, triplets, X; verbose=method.verbose, print_every=method.print_every)
 
     X, tr = procrustes(X, Matrix(μ'))
 
@@ -175,4 +177,57 @@ function fuse!(annotations::DataFrame, index::Symbol, method::TE)
 end
 
 
-# struct Copeland <: FusionMethod end
+struct Copeland <: FusionMethod end
+
+function copeland(annotations::DataFrame)
+    points = zeros(size(annotations,1))
+    nannotations, nannotators = size(annotations)
+
+    # For each annotator, we compare all of their annotations with each other
+    for i in 1:nannotations, j = i + 1:nannotations
+        votesᵢ = 0 # Votes for each option
+        votesⱼ = 0
+
+        for a in 1:nannotators
+            ratingᵢ = annotations[i, a]
+            ratingⱼ = annotations[j, a]
+
+             if !ismissing(ratingᵢ) || !ismissing(ratingⱼ)
+                 if !ismissing(ratingᵢ) && ismissing(ratingⱼ)
+                     ratingⱼ = 0
+                 elseif ismissing(ratingᵢ) && ismissing(ratingⱼ)
+                     ratingᵢ = 0
+                 end
+
+                if ratingᵢ > ratingⱼ
+                    votesᵢ = votesᵢ + 1
+                elseif ratingᵢ < ratingⱼ
+                    votesⱼ = votesⱼ + 1
+                end
+             end
+        end
+
+        if votesᵢ > votesⱼ
+            points[i] = points[i] + 1
+        elseif votesᵢ < votesⱼ
+            points[j] = points[j] + 1
+        else
+            points[i] = points[i] + 1/2
+            points[j] = points[j] + 1/2
+        end
+    end
+
+    return points
+end
+
+function fuse(annotations::DataFrame, index::Symbol, method::Copeland)
+    μ = fuse(annotations, index, Mean())
+    points = copeland(annotations[:, Not(index)])
+
+    points, tr = procrustes(Matrix(points'), Matrix(μ'))
+    return Vector(dropdims(points', dims=2))
+end
+
+function fuse!(annotations::DataFrame, index::Symbol, method::Copeland)
+    annotations.copeland = fuse(annotations, index, method)
+end

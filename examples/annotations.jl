@@ -14,4 +14,11 @@ annotations = DataFrame(items = 1:n, A = scores, B = round.(Int, clamp.(1.2 .* s
 
 te = fuse(annotations, :items, TE())
 
-plot(annotations.A); plot!(annotations.B); plot!(μ); plot!(te)
+copeland = fuse(annotations, :items, Copeland())
+
+plot(annotations.A, label="Annotator A")
+plot!(annotations.B, label="Annotator B")
+plot!(μ, label="Mean")
+plot!(te, label="Triplet Embedding")
+plot!(copeland, label="Copeland")
+

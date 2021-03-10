@@ -11,7 +11,7 @@ import TripletEmbeddings: Triplets
 
 export Triplets,
     dense,
-    Mean, Median, TE,
+    Mean, Median, TE, Copeland,
     fuse, fuse!
 
 # include("fusion.jl")

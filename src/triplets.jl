@@ -1,43 +1,42 @@
 function Triplets(
-    annotations::DataFrame;
-    weights::Array{Float64,1}=ones(Float64,size(annotations,2))
+    annotations::DataFrame,
+    index::Symbol;
+    number_of_triplets::Int = floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), 20 * size(annotations, 1) * log(size(annotations, 1)))),
+    weights::Vector{Float64} = ones(Float64, size(annotations[:, Not(index)], 2))
     )
 
-    nannotations = size(annotations, 1)
-    ntriplets = nannotations * binomial(nannotations - 1, 2)
-    nannotators = size(annotations, 2) - 1
-    triplets = Vector{Tuple{Int,Int,Int}}(undef, ntriplets)
+    nannotations, nannotators = size(annotations[:, Not(index)])
+    samples = sampletriplets(nannotations, number_of_triplets)
     counter = 0
 
-    D = [distances(annotations[:,i]) for i in 1:nannotators]
+    S = TripletEmbeddings.triplettype(nannotations)
+    triplets = Vector{Triplet{S}}(undef, 0)
+    D = [distances(column) for column in eachcol(annotations[:, Not(index)])]
 
-    for k = 1:nannotations, j = 1:k-1, i = 1:nannotations
-        if i != j && i != k
+    for t in samples
+        less_than = 0
+        greater_than = 0
 
-            less_than = 0
-            greater_than = 0
-
-            for l = 1:nannotators
-                if !ismissing(D[l][i,j]) && !ismissing(D[l][i,k])
-                    if D[l][i,j] < D[l][i,k]
-                        less_than += weights[l]
-                    elseif D[l][i,j] > D[l][i,k]
-                        greater_than += weights[l]
-                    end
+        for l in 1:nannotators
+            if !ismissing(D[l][t[1], t[2]]) && !ismissing(D[l][t[1], t[3]])
+                if D[l][t[1], t[2]] < D[l][t[1], t[3]]
+                    less_than += weights[l]
+                elseif D[l][t[1], t[2]] > D[l][t[1], t[3]]
+                    greater_than += weights[l]
                 end
             end
+        end
 
-            if less_than > greater_than
-                counter += 1
-                @inbounds triplets[counter] = (i, j, k)
-            elseif less_than < greater_than
-                counter += 1
-                @inbounds triplets[counter] = (i, k, j)
-            end
+        if less_than > greater_than
+            counter += 1
+            push!(triplets, Triplet(t[1], t[2], t[3]))
+        elseif less_than < greater_than
+            counter += 1
+            push!(triplets, Triplet(t[1], t[3], t[2]))
         end
     end
 
-    return Triplets(triplets[1:counter])
+    return triplets
 end
 
 function distances(annotations::Vector{Union{T, Missing}}) where T <: Real
@@ -53,4 +52,17 @@ function distances(annotations::Vector{Union{T, Missing}}) where T <: Real
     end
 
     return D + D'
+end
+
+function distances(annotations::Vector{T}) where T <: Real
+    return pairwise(SqEuclidean(), annotations', dims=2)
+end
+
+function Triplets(Y::AbstractMatrix{T}, n::Int) where T <: Real
+    # triplets = [Triplets(Y[:, partition]) for partition in Iterators.partition(1:size(Y, 2), n)]
+    for partition in Iterators.partition(1:size(Y, 2), n)
+        println(partition)
+        Triplets(Y[:, partition])
+        # println(partition)
+    end
 end

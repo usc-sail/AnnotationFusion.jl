@@ -50,7 +50,7 @@ items = :items
 ratings = Symbol("some.answer")
 
 # This is required is the ratings are saved in a sparse array instead of a matrix
-arousal = AnnotationFusion.generateAnnotationsMatrix(data, raters, items, ratings)
+arousal = AnnotationFusion.dense(data, raters, items, ratings)
 
 # Generate the triplets from a matrix, where rows indicate items and columns indicate raters
 triplets = AnnotationFusion.Triplets(arousal[!,2:end])

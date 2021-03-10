@@ -43,31 +43,27 @@ function CCCweights(annotations::DataFrame)
     return sum(CCCs, dims=2) .- 1
 end
 
-function agreements(
-    triplets1::TripletEmbeddings.Triplets{Tuple{Int64,Int64,Int64}},
-    triplets2::TripletEmbeddings.Triplets{Tuple{Int64,Int64,Int64}})
+function agreements(triplets1::T, triplets2::T) where T <: Triplets
 
-    n1 = maximum(getindex.(triplets1, [1 2 3]))
-    n2 = maximum(getindex.(triplets1, [1 2 3]))
+    n1, n2 = maximum(triplets1), maximum(triplets2)
 
-    n1 == n2 || throw(ArgumentError("Number of items does not match"))
+    n1 == n2 || throw(ArgumentError("Number of items in each triplet set does not match"))
 
-    set1 = Set(triplets1)
-    set2 = Set(triplets2)
+    intersection = intersect(Set(triplets1), Set(triplets2))
 
-    return length(intersect(set1, set2)) / ( n1 * binomial(n1 - 1, 2))
+    return length(intersection) / ( n1 * binomial(n1 - 1, 2))
 end
 
-function generateAnnotationsMatrix(data::DataFrame, raters::Symbol, items::Symbol, ratings::Symbol)
+function dense(data::DataFrame, raters::Symbol, items::Symbol, ratings::Symbol)
     groups = groupby(select(data, [items, raters, ratings]), raters)
     df = select(convert(DataFrame, groups[1]), [items, ratings])
 
     for i = 2:length(groups)
         aux = select(convert(DataFrame, groups[i]), [items, ratings])
-        df = join(df, aux, on=items, makeunique=true, kind=:outer)
+        df = outerjoin(df, aux, on=items, makeunique=true)
     end
 
-    annotators = unique(data[!,raters])
+    annotators = unique(data[!, raters])
     rename!(df, [items; Symbol.(annotators)])
 
     return df

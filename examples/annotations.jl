@@ -16,7 +16,7 @@ te = fuse(annotations, :items, TE())
 
 copeland = fuse(annotations, :items, Copeland())
 
-plot(annotations.A, label="Annotator A")
+plot(annotations.A, label="Annotator A", xlabel="Item index", ylabel="Score", title="Scores")
 plot!(annotations.B, label="Annotator B")
 plot!(μ, label="Mean")
 plot!(te, label="Triplet Embedding")

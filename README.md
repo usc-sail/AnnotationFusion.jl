@@ -35,6 +35,7 @@ This package may also be used directly in Julia scripts. Please visit the `examp
 
 ### Classification (session-level annotations)
 We assume that the annotations are saved in a CSV file, where each row represents a session and each column contains annotations from different annotators, plus an index column (in this case, `items`):
+
 ```julia
 │ Row  │ items   │ A       │ B       │ C       │ D       │
 │      │ Int64   │ Int64   │ Int64   │ Int64   │ Int64   │
@@ -68,6 +69,7 @@ Uses an adapted version of Copeland's method to obtain points for each item, bas
 
 #### Example
 The following example used all aforementioned methods:
+
 ```julia
 using Plots
 using Random

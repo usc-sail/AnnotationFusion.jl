@@ -2,6 +2,13 @@
 This package implements algorithms based on Copeland's method and Triplet Embeddings for fusion of human annotations. It supports both annotations in time (i.e. regression) as well as session-level annotations (i.e. classification, or unique annotations for a given item).
 
 # Installation
+To install Julia, please follow this [link](https://julialang.org/downloads/). The package has been tested in Julia v1.3 or newer.
+
+In MacOS, the downloads are also distributed through Homebrew. To install Julia, you can simply do:
+```bash
+$ brew install julia # will install the latest stable version
+```
+
 To install the latest version, use Julia 1.2 or greater. In a Julia REPL, do:
 ```julia
 julia> ]
@@ -9,6 +16,17 @@ julia> ]
 ```
 
 # Usage
+### Multithreadings
+The underlying `TripletEmbeddings.jl` package uses multithreading. To start Julia with multiple threads, do:
+```bash
+$ julia --threads 4
+```
+or set the following environment variable (in your terminal, before starting Julia):
+```bash
+$ export JULIA_NUM_THREADS=4
+```
+More details can be found in the [documentation](https://docs.julialang.org/en/v1/manual/multi-threading/).
+
 ## Helper scripts
 Scripts to automatically use this package from the command line may be found in [this repo](https://www.github.com/kmundnic/annotation-fusion). These scripts will install the necessary packages and run the fusion from the annotations passed to it from CSV file.
 
@@ -36,8 +54,8 @@ You can use the methods `fuse` (to obtain a vector of fused annotations) of `fus
 
  - Mean
  - Median
- - Triplet Embeddings
- - Copeland's method (see Interspeech 2017 paper below)
+ - Copeland's method (see [1])
+ - Triplet Embeddings (see [3])
 
 #### Mean and Median
 We simply use the mean and median over rows (skipping `missing` or `NaN` values) to compute the scores.
@@ -89,6 +107,8 @@ This code generates the following results:
 ### Regression (or real-time, or time-continuous annotations)
 
 # References
- - Mundnich K, Nasir M, Georgiou PG, Narayanan SS. _Exploiting Intra-Annotator Rating Consistency Through Copeland's Method for Estimation of Ground Truth Labels in Couples' Therapy_. In INTERSPEECH 2017 (pp. 3167-3171). [PDF](https://sail.usc.edu/publications/files/mundnichinterspeech2017.pdf)
- - Booth BM, Mundnich K, Narayanan S. _Fusing annotations with majority vote triplet embeddings_. In Proceedings of the 2018 on Audio/Visual Emotion Challenge and Workshop 2018 Oct 15 (pp. 83-89). [PDF](https://sail.usc.edu/publications/files/p83-booth.pdf)
- - Mundnich K, Booth BM, Girault B, Narayanan S. _Generating labels for regression of subjective constructs using triplet embeddings_. Pattern Recognition Letters. 2019 Dec 1; 128:385-92. [PDF](https://sail.usc.edu/publications/files/1-s2.0-S0167865519302752-main%20(1).pdf)
+ [1] Mundnich K, Nasir M, Georgiou PG, Narayanan SS. [_Exploiting Intra-Annotator Rating Consistency Through Copeland's Method for Estimation of Ground Truth Labels in Couples' Therapy_](https://sail.usc.edu/publications/html/b2hd-mundnich2017exploiting.html). In INTERSPEECH 2017 (pp. 3167-3171).
+ 
+ [2] Booth BM, Mundnich K, Narayanan S. [_Fusing annotations with majority vote triplet embeddings_](https://sail.usc.edu/publications/html/b2hd-Booth2018FusingAnnotationswithMajority.html). In Proceedings of the 2018 on Audio/Visual Emotion Challenge and Workshop 2018 Oct 15 (pp. 83-89).
+ 
+ [3] Mundnich K, Booth BM, Girault B, Narayanan S. [_Generating labels for regression of subjective constructs using triplet embeddings_](https://sail.usc.edu/publications/html/b2hd-Mundnich2019Generatinglabelsforregression.html). Pattern Recognition Letters. 2019 Dec 1; 128:385-92.

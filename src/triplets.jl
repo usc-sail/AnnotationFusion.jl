@@ -1,15 +1,15 @@
 function Triplets(
     annotations::DataFrame,
-    index::Symbol;
-    number_of_triplets::Int = floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), 20 * size(annotations, 1) * log(size(annotations, 1)))),
+    index::Symbol,
+    ntriplets::Int,
     weights::Vector{Float64} = ones(Float64, size(annotations[:, Not(index)], 2))
     )
 
     nannotations, nannotators = size(annotations[:, Not(index)])
-    samples = sampletriplets(nannotations, number_of_triplets)
+    samples = sampletriplets(nannotations, ntriplets)
     counter = 0
 
-    S = TripletEmbeddings.triplettype(nannotations)
+    S = TripletEmbeddings.tripletstype(nannotations)
     triplets = Vector{Triplet{S}}(undef, 0)
     D = [distances(column) for column in eachcol(annotations[:, Not(index)])]
 

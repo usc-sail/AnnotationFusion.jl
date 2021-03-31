@@ -15,12 +15,6 @@ path = joinpath(dirname(@__DIR__), "data/DOME/")
 file = joinpath(path, "dome_annotations_M1.csv")
 df = CSV.read(file, DataFrame)
 
-function name(method::AnnotationFusion.FusionMethod)
-    method_name = string(method)
-    index = only(findfirst("(", method_name))
-    return lowercase(method_name[begin:index-1])
-end
-
 function aggregate_row(row; method::AnnotationFusion.FusionMethod = Copeland(), annotators = ["A$i" for i in 1:3], persons = 1:4)
 
     columns = vcat(["Person", annotators]...)

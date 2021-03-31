@@ -73,3 +73,40 @@ end
 function columncounts(df::AbstractDataFrame, column::Symbol)
     return Dict([(i, count(x -> x == i, df[!,column])) for i in unique(df[!,column])])
 end
+
+"""
+    function anonymize(df::DataFrame, raters::Symbol)
+
+Anonymize the raters' names in columns `raters`. Returns
+the same dataframe `df` with hashed values in the
+`raters` column.
+"""
+function anonymize(df::DataFrame, raters::Symbol)
+    annotators = unique(df[!,raters])
+    hashed = Dict(annotators .=> hashsha256.(annotators))
+    df[!,raters] = [hashed[annotator] for annotator in df[!,raters]]
+    return df
+end
+
+function anonymize!(df::DataFrame, raters::Symbol)
+    annotators = unique(df[!,raters])
+    hashed = Dict(annotators .=> hashsha256.(annotators))
+    df[!,raters] = [hashed[annotator] for annotator in df[!,raters]]
+end
+
+function hashsha256(s::AbstractString; nchars::Int = 8)
+    return bytes2hex(sha256(s))[1:nchars]
+end
+
+"""
+    function name(method::AnnotationFusion.FusionMethod)
+
+Return the name of an annotation fusion method from its signature.
+
+This method should be used to create column names in a DataFrame.
+"""
+function name(method::AnnotationFusion.FusionMethod)
+    method_name = string(method)
+    index = only(findfirst("(", method_name))
+    return lowercase(method_name[begin:index-1])
+end

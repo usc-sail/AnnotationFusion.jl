@@ -1,5 +1,6 @@
 module AnnotationFusion
 
+using SHA
 using Random
 using Distances
 using DataFrames
@@ -10,9 +11,10 @@ using TripletEmbeddings
 import TripletEmbeddings: Triplets
 
 export Triplets,
-    dense,
+    dense, anonymize, anonymize!,
     Mean, Median, TE, Copeland,
-    fuse, fuse!
+    fuse, fuse!,
+    name
 
 # include("fusion.jl")
 include("utils.jl")

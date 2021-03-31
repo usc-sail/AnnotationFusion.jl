@@ -147,20 +147,54 @@ function fuse(annotations::DataFrame, index::Symbol, method::Median; g::Function
 end
 
 
+"""
+    TE([loss::T=tSTE(α=30), ntriplets::Symbol = :all, verbose::Bool=true, print_every::Int=50]) where T <: TripletEmbeddings.AbstractLoss
+
+Create a Triplet Embedding fusion method.
+
+# Arguments
+
+ - loss: Loss to be used (between STE and tSTE). Default is `tSTE(α=30)` (equivalent to `STE()` but more numerically stable)
+ - ntriplets: Number of triplets to sample between `[:all, :auto]`. Use :auto if you run into memory issues, it randomly samples 20nlog(n) triplets.
+
+# Summary
+
+struct TE <: AnnotationFusion.FusionMethod
+
+# Fields
+
+    loss        :: TripletEmbeddings.AbstractLoss
+    ntriplets   :: Symbol
+    verbose     :: Bool
+    print_every :: Int64
+
+# Supertype Hierarchy
+
+TE <: AnnotationFusion.FusionMethod <: Any
+"""
 struct TE <: FusionMethod
     loss::T where T <: TripletEmbeddings.AbstractLoss
+    ntriplets::Symbol
     verbose::Bool
     print_every::Int
 
-    function TE(; loss::T=tSTE(α=30), verbose::Bool=true, print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
-        # tSTE(α=30) is equivalent to STE(σ=1/√(2)), but more numerically stable
-        new(loss, verbose, print_every)
+    function TE(; loss::T=tSTE(α=30), ntriplets::Symbol = :all, verbose::Bool=true, print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
+        ntriplets in [:all, :auto] || throw(ArgumentError("ntriplets must be one of [:auto, :all]"))
+        new(loss, ntriplets, verbose, print_every)
     end
 end
 
 function fuse(annotations::DataFrame, index::Symbol, method::TE)
     n = size(annotations, 1)
-    triplets = Triplets(annotations, index)
+
+    ntriplets = if method.ntriplets == :auto
+        # If auto, uses the min between all triplets and 20nlog(n)
+        floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), 20 * size(annotations, 1) * log(size(annotations, 1))))
+    elseif method.ntriplets == :all
+        n * binomial(n - 1, 2)
+    end
+
+    triplets = Triplets(annotations, index, ntriplets)
 
     μ = fuse(annotations, index, Mean())
     X = Embedding(μ) # set the initial condition as the mean, since they are somewhat close
@@ -199,10 +233,12 @@ function copeland(annotations::DataFrame)
                      ratingᵢ = 0
                  end
 
-                if ratingᵢ > ratingⱼ
-                    votesᵢ = votesᵢ + 1
-                elseif ratingᵢ < ratingⱼ
-                    votesⱼ = votesⱼ + 1
+                if !ismissing(ratingᵢ) && !ismissing(ratingⱼ)
+                    if ratingᵢ > ratingⱼ
+                        votesᵢ = votesᵢ + 1
+                    elseif ratingᵢ < ratingⱼ
+                        votesⱼ = votesⱼ + 1
+                    end
                 end
              end
         end

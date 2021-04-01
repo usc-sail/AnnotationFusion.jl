@@ -16,9 +16,8 @@ export Triplets,
     fuse, fuse!,
     name
 
-# include("fusion.jl")
-include("utils.jl")
 include("triplets.jl")
 include("methods.jl")
+include("utils.jl")
 
 end

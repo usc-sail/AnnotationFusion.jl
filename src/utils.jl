@@ -99,13 +99,13 @@ function hashsha256(s::AbstractString; nchars::Int = 8)
 end
 
 """
-    function name(method::AnnotationFusion.FusionMethod)
+    function name(method::FusionMethod)
 
 Return the name of an annotation fusion method from its signature.
 
 This method should be used to create column names in a DataFrame.
 """
-function name(method::AnnotationFusion.FusionMethod)
+function name(method::FusionMethod)
     method_name = string(method)
     index = only(findfirst("(", method_name))
     return lowercase(method_name[begin:index-1])

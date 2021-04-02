@@ -107,6 +107,7 @@ This code generates the following results:
 
 
 ### Regression (or real-time, or time-continuous annotations)
+Fusion for regression problems works the same way as in the example above. Note, however, that usually time-alignment is needed before the fusion, which is currently not implemented.
 
 # References
  [1] Mundnich K, Nasir M, Georgiou PG, Narayanan SS. [_Exploiting Intra-Annotator Rating Consistency Through Copeland's Method for Estimation of Ground Truth Labels in Couples' Therapy_](https://sail.usc.edu/publications/html/b2hd-mundnich2017exploiting.html). In INTERSPEECH 2017 (pp. 3167-3171).

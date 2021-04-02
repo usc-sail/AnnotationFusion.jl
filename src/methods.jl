@@ -210,8 +210,26 @@ function fuse!(annotations::DataFrame, index::Symbol, method::TE)
     annotations.TE = fuse(annotations, index, method)
 end
 
+struct Copeland <: FusionMethod
+    imputation::Function
+    scaling::Symbol
 
-struct Copeland <: FusionMethod end
+    """
+        function Copeland([imputation::Function = row -> mean(skipmissing(row)), scaling::Symbol=:ML])
+
+    Create a Copeland's method struct.
+
+    # Arguments
+
+     - imputation: Function to impute values (per row). Defaults to the mean of the row values.
+     - scaling: Either by reusing the ratings distribution of the annotations matrix (`:ML`) or `:procrustes`. Defaults to :ML.
+    """
+    function Copeland(; imputation::Function = row -> mean(skipmissing(row)), scaling::Symbol=:ML)
+        scaling in [:ML, :procrustes] || throw(ArgumentError("scaling mus be one of [:ML, :procrustes]"))
+
+        new(imputation, scaling)
+    end
+end
 
 function copeland(annotations::DataFrame)
     points = zeros(size(annotations,1))
@@ -258,12 +276,38 @@ end
 
 function fuse(annotations::DataFrame, index::Symbol, method::Copeland)
     μ = fuse(annotations, index, Mean())
-    points = copeland(annotations[:, Not(index)])
+    imputed = fillmissing(annotations, index, method.imputation)
+    points = copeland(imputed[:, Not(index)])
 
-    points, tr = procrustes(Matrix(points'), Matrix(μ'))
-    return Vector(dropdims(points', dims=2))
+    if method.scaling == :procrustes
+        points, tr = procrustes(Matrix(points'), Matrix(μ'))
+        return Vector(dropdims(points', dims=2))
+    elseif method.scaling == :ML
+        return rankings_to_ratings(annotations, index, μ, points)
+    end
 end
 
 function fuse!(annotations::DataFrame, index::Symbol, method::Copeland)
     annotations.copeland = fuse(annotations, index, method)
+end
+
+function rankings_to_ratings(annotations::DataFrame, index::Symbol, means::Vector{T}, points::Vector{T}) where T <: Real
+    size(annotations, 1) == length(points) || throw(ArgumentError("Number of rows in annotations must be the same as length of points"))
+
+    results = sort(DataFrame([annotations[!,index],  points], [index, :points]), :points)
+
+    vals = collect(skipmissing(vec(Matrix(annotations[:, Not(index)]))))
+    scale = sort(unique(vals))
+
+    counts = fit(Histogram, vals, nbins=length(scale)).weights
+    ratings = zeros(Float64, length(points))
+    args = ceil.(Int, cumsum(counts) ./ sum(counts) .* length(ratings))
+
+    ratings[1:args[1]] .= scale[1]
+    for i in scale[2:end]
+        ratings[args[i-1] + 1:args[i]] .= i
+    end
+
+    results.ratings = ratings
+    return sort(results, index).ratings
 end

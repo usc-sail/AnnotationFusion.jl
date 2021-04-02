@@ -110,3 +110,33 @@ function name(method::FusionMethod)
     index = only(findfirst("(", method_name))
     return lowercase(method_name[begin:index-1])
 end
+
+"""
+    function fillmissing!(row::DataFrameRow, value::Number)
+
+Fill missing values for a DataFrameRow, using `value` to replace the missing values..
+"""
+function fillmissing!(row::DataFrameRow, value::Number)
+    for i in eachindex(row)
+        row[i] = ismissing(row[i]) ? value : row[i]
+    end
+end
+
+"""
+    function fillmissing!(df::DataFrame, f::Function)
+
+Fill missing values per row, using the function f applied row-wise.
+"""
+function fillmissing(df::DataFrame, index::Symbol, f::Function)
+    imputed = copy(df)
+
+    for name in names(imputed[!, Not(index)])
+        imputed[!, name] = convert(Vector{Union{Float64,Missing}}, imputed[!, name])
+    end
+
+    for row in eachrow(imputed)
+        fillmissing!(row[Not(index)], f(row[Not(index)]))
+    end
+
+    return imputed
+end

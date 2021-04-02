@@ -3,6 +3,7 @@ module AnnotationFusion
 using SHA
 using Random
 using Distances
+using StatsBase
 using DataFrames
 using LinearAlgebra
 using Statistics: mean, median

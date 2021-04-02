@@ -27,8 +27,8 @@ $ export JULIA_NUM_THREADS=4
 ```
 More details can be found in the [documentation](https://docs.julialang.org/en/v1/manual/multi-threading/).
 
-## Helper scripts
-Scripts to automatically use this package from the command line may be found in [this repo](https://www.github.com/kmundnic/annotation-fusion). These scripts will install the necessary packages and run the fusion from the annotations passed to it from CSV file.
+## Usage Examples
+Several usage examples may be found in the `examples/` folder.
 
 ## Package
 This package may also be used directly in Julia scripts. Please visit the `examples/` folder for examples.

@@ -15,7 +15,8 @@ export Triplets,
     dense, anonymize, anonymize!,
     Mean, Median, TE, Copeland,
     fuse, fuse!,
-    name
+    name,
+    fillmissing, fillmissing!
 
 include("triplets.jl")
 include("methods.jl")

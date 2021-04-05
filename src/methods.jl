@@ -76,6 +76,10 @@ function fuse(annotations::DataFrame, index::Symbol, method::Mean; g::Function=x
     return [g(mean(method.f, skipmissing(row[Not(index)]))) for row in eachrow(annotations)]
 end
 
+function fuse(annotations::AbstractMatrix, method::Mean; g::Function=x -> x)
+    return [g(mean(method.f, skipmissing(row))) for row in eachrow(annotations)]
+end
+
 """
     Mean <: FusionMethod
 
@@ -146,6 +150,9 @@ function fuse(annotations::DataFrame, index::Symbol, method::Median; g::Function
     return [g(median(skipmissing(row[Not(index)]))) for row in eachrow(annotations)]
 end
 
+function fuse(annotations::AbstractMatrix, method::Median; g::Function=x -> x)
+    return [g(median(skipmissing(row))) for row in eachrow(annotations)]
+end
 
 """
     TE([loss::T=tSTE(α=30), ntriplets::Symbol = :all, verbose::Bool=true, print_every::Int=50]) where T <: TripletEmbeddings.AbstractLoss
@@ -215,17 +222,17 @@ struct Copeland <: FusionMethod
     scaling::Symbol
 
     """
-        function Copeland([imputation::Function = row -> mean(skipmissing(row)), scaling::Symbol=:ML])
+        function Copeland([imputation::Function = row -> mean(skipmissing(row)), scaling::Symbol=:distribution])
 
     Create a Copeland's method struct.
 
     # Arguments
 
      - imputation: Function to impute values (per row). Defaults to the mean of the row values.
-     - scaling: Either by reusing the ratings distribution of the annotations matrix (`:ML`) or `:procrustes`. Defaults to :ML.
+     - scaling: Either by reusing the ratings' distribution of the annotations matrix (`:distribution`) or `:procrustes`. Defaults to `:distribution`.
     """
-    function Copeland(; imputation::Function = row -> mean(skipmissing(row)), scaling::Symbol=:ML)
-        scaling in [:ML, :procrustes] || throw(ArgumentError("scaling mus be one of [:ML, :procrustes]"))
+    function Copeland(; imputation::Function = row -> mean(skipmissing(row)), scaling::Symbol=:distribution)
+        scaling in [:distribution, :procrustes] || throw(ArgumentError("scaling mus be one of [:distribution, :procrustes]"))
 
         new(imputation, scaling)
     end
@@ -282,13 +289,25 @@ function fuse(annotations::DataFrame, index::Symbol, method::Copeland)
     if method.scaling == :procrustes
         points, tr = procrustes(Matrix(points'), Matrix(μ'))
         return Vector(dropdims(points', dims=2))
-    elseif method.scaling == :ML
+    elseif method.scaling == :distribution
         return rankings_to_ratings(annotations, index, μ, points)
     end
 end
 
 function fuse!(annotations::DataFrame, index::Symbol, method::Copeland)
     annotations.copeland = fuse(annotations, index, method)
+end
+
+function fuse(annotations::AbstractMatrix, method::Copeland)
+    μ = fuse(annotations, Mean())
+    imputed = fillmissing(annotations, method.imputation)
+
+    if method.scaling == :procrustes
+        points, tr = procrustes(Matrix(points'), Matrix(μ'))
+        return Vector(dropdims(points', dims=2))
+    elseif method.scaling == :distribution
+        return rankings_to_ratings(annotations, index, μ, points)
+    end
 end
 
 function rankings_to_ratings(annotations::DataFrame, index::Symbol, means::Vector{T}, points::Vector{T}) where T <: Real

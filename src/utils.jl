@@ -112,11 +112,11 @@ function name(method::FusionMethod)
 end
 
 """
-    function fillmissing!(row::DataFrameRow, value::Number)
+    function fillmissing!(row, value::T) where T <: Real
 
-Fill missing values for a DataFrameRow, using `value` to replace the missing values..
+Fill missing values for a vector, using `value` to replace the missing values..
 """
-function fillmissing!(row::DataFrameRow, value::Number)
+function fillmissing!(row, value::T) where T <: Real
     for i in eachindex(row)
         row[i] = ismissing(row[i]) ? value : row[i]
     end
@@ -136,6 +136,16 @@ function fillmissing(df::DataFrame, index::Symbol, f::Function)
 
     for row in eachrow(imputed)
         fillmissing!(row[Not(index)], f(row[Not(index)]))
+    end
+
+    return imputed
+end
+
+function fillmissing(df::AbstractMatrix, f::Function)
+    imputed = convert(Matrix{Union{Missing, Float64}}, df)
+
+    for row in eachrow(imputed)
+        fillmissing!(row, f(row))
     end
 
     return imputed

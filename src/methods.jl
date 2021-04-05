@@ -163,6 +163,7 @@ Create a Triplet Embedding fusion method.
 
  - loss: Loss to be used (between STE and tSTE). Default is `tSTE(α=30)` (equivalent to `STE()` but more numerically stable)
  - ntriplets: Number of triplets to sample between `[:all, :auto]`. Use :auto if you run into memory issues, it randomly samples 20nlog(n) triplets.
+ - scaling: Scaling of the embeddings. Options: `[:distribution, :procrustes]`. Use `:procrustes` for continuous scales, `:distribution` for discrete scales.
 
 # Summary
 
@@ -182,12 +183,14 @@ TE <: AnnotationFusion.FusionMethod <: Any
 struct TE <: FusionMethod
     loss::T where T <: TripletEmbeddings.AbstractLoss
     ntriplets::Symbol
+    scaling::Symbol
     verbose::Bool
     print_every::Int
 
-    function TE(; loss::T=tSTE(α=30), ntriplets::Symbol = :all, verbose::Bool=true, print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
+    function TE(; loss::T=tSTE(α=30), ntriplets::Symbol = :all, scaling::Symbol=:procrustes, verbose::Bool=true, print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
         ntriplets in [:all, :auto] || throw(ArgumentError("ntriplets must be one of [:auto, :all]"))
-        new(loss, ntriplets, verbose, print_every)
+        scaling in [:distribution, :procrustes] || throw(ArgumentError("scaling must be one of [:distribution, :procrustes]"))
+        new(loss, ntriplets, scaling, verbose, print_every)
     end
 end
 
@@ -196,7 +199,7 @@ function fuse(annotations::DataFrame, index::Symbol, method::TE)
 
     ntriplets = if method.ntriplets == :auto
         # If auto, uses the min between all triplets and 20nlog(n)
-        floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), 20 * size(annotations, 1) * log(size(annotations, 1))))
+        floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), 40 * size(annotations, 1) * log(size(annotations, 1))))
     elseif method.ntriplets == :all
         n * binomial(n - 1, 2)
     end
@@ -208,9 +211,12 @@ function fuse(annotations::DataFrame, index::Symbol, method::TE)
 
     misclassifications = fit!(method.loss, triplets, X; verbose=method.verbose, print_every=method.print_every)
 
-    X, tr = procrustes(X, Matrix(μ'))
-
-    return TripletEmbeddings.Vector(X)
+    if method.scaling == :procrustes
+        X, tr = procrustes(X, Matrix(μ'))
+        return TripletEmbeddings.Vector(X)
+    elseif method.scaling == :distribution
+        return rankings_to_ratings(annotations, index, μ, TripletEmbeddings.Vector(X))
+    end
 end
 
 function fuse!(annotations::DataFrame, index::Symbol, method::TE)

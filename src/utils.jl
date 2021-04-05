@@ -98,6 +98,13 @@ function hashsha256(s::AbstractString; nchars::Int = 8)
     return bytes2hex(sha256(s))[1:nchars]
 end
 
+function anonymize(df::DataFrame)
+    annotators = names(df)
+    hashed = Dict(annotators .=> hashsha256.(annotators))
+    rename!(df, hashed)
+    return df
+end
+
 """
     function name(method::FusionMethod)
 

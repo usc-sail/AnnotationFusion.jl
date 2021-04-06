@@ -183,14 +183,16 @@ TE <: AnnotationFusion.FusionMethod <: Any
 struct TE <: FusionMethod
     loss::T where T <: TripletEmbeddings.AbstractLoss
     ntriplets::Symbol
+    constant::Int
     scaling::Symbol
     verbose::Bool
     print_every::Int
 
-    function TE(; loss::T=tSTE(α=30), ntriplets::Symbol = :all, scaling::Symbol=:procrustes, verbose::Bool=true, print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
+    function TE(; loss::T=tSTE(α=30), ntriplets::Symbol = :all, constant::Int = 40, scaling::Symbol=:procrustes, verbose::Bool=true, print_every::Int=50) where T <: TripletEmbeddings.AbstractLoss
         ntriplets in [:all, :auto] || throw(ArgumentError("ntriplets must be one of [:auto, :all]"))
+        constant ≥ 1 || throw(ArgumentError("Constant in Cnlog(n) must be ≥ 1."))
         scaling in [:distribution, :procrustes] || throw(ArgumentError("scaling must be one of [:distribution, :procrustes]"))
-        new(loss, ntriplets, scaling, verbose, print_every)
+        new(loss, ntriplets, constant, scaling, verbose, print_every)
     end
 end
 
@@ -199,7 +201,7 @@ function fuse(annotations::DataFrame, index::Symbol, method::TE)
 
     ntriplets = if method.ntriplets == :auto
         # If auto, uses the min between all triplets and 20nlog(n)
-        floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), 40 * size(annotations, 1) * log(size(annotations, 1))))
+        floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), method.constant * size(annotations, 1) * log(size(annotations, 1))))
     elseif method.ntriplets == :all
         n * binomial(n - 1, 2)
     end

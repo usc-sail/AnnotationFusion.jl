@@ -200,7 +200,7 @@ function fuse(annotations::DataFrame, index::Symbol, method::TE)
     n = size(annotations, 1)
 
     ntriplets = if method.ntriplets == :auto
-        # If auto, uses the min between all triplets and 20nlog(n)
+        # If auto, uses the min between all triplets and method.constant * nlog(n)
         floor(Int, min(size(annotations, 1) * binomial(size(annotations, 1) - 1, 2), method.constant * size(annotations, 1) * log(size(annotations, 1))))
     elseif method.ntriplets == :all
         n * binomial(n - 1, 2)

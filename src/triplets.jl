@@ -39,7 +39,7 @@ function Triplets(
     return triplets
 end
 
-function distances(annotations::Vector{Union{T, Missing}}) where T <: Real
+function distances(annotations::AbstractArray)
     n = length(annotations)
     D = zeros(Union{Float64,Missing}, n, n)
 

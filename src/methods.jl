@@ -209,7 +209,7 @@ function fuse(annotations::DataFrame, index::Symbol, method::TE)
     μ = fuse(annotations, index, Mean())
     X = Embedding(μ) # set the initial condition as the mean, since they are somewhat close
 
-    misclassifications = fit!(method.loss, triplets, X; verbose=method.verbose, print_every=method.print_every)
+    misclassifications = TripletEmbeddings.fit!(method.loss, triplets, X; verbose=method.verbose, print_every=method.print_every)
 
     if method.scaling == :procrustes
         X, tr = procrustes(X, Matrix(μ'))

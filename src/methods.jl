@@ -331,8 +331,8 @@ function rankings_to_ratings(annotations::DataFrame, index::Symbol, means::Vecto
     args = ceil.(Int, cumsum(counts) ./ sum(counts) .* length(ratings))
 
     ratings[1:args[1]] .= scale[1]
-    for i in scale[2:end]
-        ratings[args[i-1] + 1:args[i]] .= i
+    for i in 2:length(scale)
+        ratings[args[i-1] + 1:args[i]] .= scale[i]
     end
 
     results.ratings = ratings

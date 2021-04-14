@@ -116,7 +116,7 @@ function name(method::FusionMethod)
     if :scaling in fieldnames(typeof(method))
         return lowercase(string(typeof(method), "_", method.scaling))
     else
-        return lowercase(typeof(method))
+        return lowercase(string(typeof(method)))
     end
 end
 

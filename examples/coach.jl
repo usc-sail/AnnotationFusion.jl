@@ -26,11 +26,11 @@ for score in scores
     aggregates = Dict{String, Vector{Float64}}()
     annotations = dense(df, raters, items, score)
 
-    for method in [Mean(), Median(), Copeland(), TE(ntriplets=:all)]
+    for method in [Mean(), Median(), Copeland(scaling=:distribution), Copeland(scaling=:procrustes), TE(ntriplets=:all, scaling=:procrustes), TE(ntriplets=:all, scaling=:distribution)]
         aggregates[name(method)] = fuse(annotations, items, method)
-        if name(method) == "te"
-            aggregates[name(method)] = clamp.(aggregates[name(method)], 1, 7)
-        end
+        # if occursin("te", name(method))
+        #     # aggregates[name(method)] = clamp.(aggregates[name(method)], 1, 7)
+        # end
     end
 
    CSV.write(joinpath(savepath, string("COACH_", score, ".csv")), DataFrame(aggregates))

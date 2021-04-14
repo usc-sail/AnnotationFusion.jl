@@ -7,22 +7,32 @@ Use the mean to combine annotations.
 
 # Constructor
 
-    function Mean(; f = x -> x)
+    function Mean(; f = x -> x, g = x -> x)
 
 Construct a Mean method. f is the function applied when taking the mean. For example:
 
 ```julia
 julia> using Statistics
 
-julia> mean(√, [1, 2, 3])
+julia> f = x -> √x; mean(f, [1, 2, 3])
 1.3820881233139908
+```
+
+g is the function applied after taking the mean. For example:
+
+```julia
+julia> using Statistics
+
+julia> g = x -> round(x); round(g([1, 1, 3]))
+2.0
 ```
 """
 struct Mean <: FusionMethod
-    f::Function
+    f::Function # used in mean(f, x)
+    g::Function # used after: g(mean(x))
 
-    function Mean(; f = x -> x)
-        new(f)
+    function Mean(; f = x -> x, g = x -> x)
+        new(f, g)
     end
 end
 
@@ -67,41 +77,47 @@ julia> fuse(annotations, :items, Mean(); g = x -> round(Int, x))
 ```
 
 """
-function fuse!(annotations::DataFrame, index::Symbol, method::Mean; g::Function=x -> x)
-    annotations.mean = fuse(annotations, index, method; g=g)
+function fuse!(annotations::DataFrame, index::Symbol, method::Mean)
+    annotations.mean = fuse(annotations, index, method)
     return annotations
 end
 
-function fuse(annotations::DataFrame, index::Symbol, method::Mean; g::Function=x -> x)
-    return [g(mean(method.f, skipmissing(row[Not(index)]))) for row in eachrow(annotations)]
+function fuse(annotations::DataFrame, index::Symbol, method::Mean)
+    return [method.g(mean(method.f, skipmissing(row[Not(index)]))) for row in eachrow(annotations)]
 end
 
-function fuse(annotations::AbstractMatrix, method::Mean; g::Function=x -> x)
-    return [g(mean(method.f, skipmissing(row))) for row in eachrow(annotations)]
+function fuse(annotations::AbstractMatrix, method::Mean)
+    return [method.g(mean(method.f, skipmissing(row))) for row in eachrow(annotations)]
 end
 
 """
-    Mean <: FusionMethod
+    Median <: FusionMethod
 
-Use the mean to combine annotations.
+Use the median to combine annotations.
 
 # Constructor
 
-    function Mean(; f = x -> x)
+    function Median(; g = x -> x)
 
-Construct a Mean method. f is the function applied when taking the mean. For example:
+Construct a Median method. g is the function applied after taking the mean. For example:
 
 ```julia
 julia> using Statistics
 
-julia> mean(√, [1, 2, 3])
-1.3820881233139908
+julia> g = x -> round(x); g(median([1, 1, 3]))
+1.0
 ```
 """
-struct Median <: FusionMethod end
+struct Median <: FusionMethod
+    g::Function # Used after taking the median
+
+    function Median(; g = x -> x)
+        new(g)
+    end
+end
 
 """
-    fuse(annotations::DataFrame, index::Symbol, method::Median[; g::Function=x -> x])
+    fuse(annotations::DataFrame, index::Symbol, method::Median)
 
 Fuse annotations by applying the median over annotations. This assumes an annotations matrix where each row contains
 several annotations for an item or session.

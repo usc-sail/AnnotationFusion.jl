@@ -33,5 +33,5 @@ for score in scores
         # end
     end
 
-   CSV.write(joinpath(savepath, string("COACH_", score, ".csv")), DataFrame(aggregates))
+   CSV.write(joinpath(savepath, string("COACH_", score, ".csv")), hcat(annotations[:,[items]], DataFrame(aggregates)))
 end
